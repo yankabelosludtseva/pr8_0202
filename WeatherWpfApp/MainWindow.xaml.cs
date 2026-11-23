@@ -1,28 +1,46 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using WeatherWpfApp.Services;
 
 namespace WeatherWpfApp
 {
-    /// <summary>
-    /// Логика взаимодействия для MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
+        private readonly WeatherService _service = new WeatherService();
+
         public MainWindow()
         {
             InitializeComponent();
+            Loaded += async (s, e) => await LoadWeatherAsync();
+        }
+
+        private async void LoadButton_Click(object sender, RoutedEventArgs e)
+        {
+            await LoadWeatherAsync();
+        }
+
+        private async System.Threading.Tasks.Task LoadWeatherAsync()
+        {
+            try
+            {
+                LoadButton.IsEnabled = false;
+                StatusTextBlock.Text = "Загрузка данных…";
+
+                var days = await _service.GetForecastAsync(CityTextBox.Text.Trim());
+                DaysItemsControl.ItemsSource = days;
+
+                StatusTextBlock.Text = $"Обновлено: {DateTime.Now:HH:mm:ss}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка загрузки: " + ex.Message,
+                                "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                StatusTextBlock.Text = "Не удалось загрузить данные";
+            }
+            finally
+            {
+                LoadButton.IsEnabled = true;
+            }
         }
     }
 }
